@@ -1,6 +1,6 @@
 from Utils import *
 
-logging.getLogger(__name__).setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.INFO)
 
 def main():
     _ = training_loop(10, 100)

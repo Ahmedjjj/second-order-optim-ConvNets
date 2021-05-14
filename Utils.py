@@ -135,6 +135,7 @@ def training_loop(epochs, batch_size):
 
     plot_losses(train_losses, valid_losses)
 
+
     return model, optimizer, (train_losses, valid_losses)
 
 
@@ -160,4 +161,5 @@ def plot_losses(train_losses, valid_losses):
     fig.show()
 
     # change the plot style to default
-    plt.style.use('default')
+    plt.savefig("accuracy_plot")
+
