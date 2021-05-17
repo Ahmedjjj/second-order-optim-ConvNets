@@ -4,23 +4,36 @@ from torch import nn
 import matplotlib.pyplot as plt
 import numpy as np
 from model import *
+from torchvision import transforms, datasets
+from torch.utils.data import DataLoader
 
-def load_data(data_dir, batch_size):
-    from torchvision import transforms,datasets
-    from torch.utils.data import DataLoader
 
-    transforms = transforms.Compose([transforms.Resize((32, 32)),
+def load_data(data_dir, batch_size=100, dataset=None):
+
+    transformer = transforms.Compose([transforms.Resize((32, 32)),
                                      transforms.ToTensor()])
 
+    if dataset == "CIFAR":
+        dataset_loader = datasets.CIFAR10
+        transformer = transforms.Compose([transforms.Grayscale(),
+                                         transforms.Resize((32, 32)),
+                                         transforms.ToTensor()])
+
+    elif dataset == "Fashion_MNIST":
+        dataset_loader = datasets.FashionMNIST
+    else:
+        dataset_loader = datasets.MNIST
+
     # download and create datasets
-    train_dataset = datasets.MNIST(root=data_dir,
+    train_dataset = dataset_loader(root=data_dir,
                                    train=True,
-                                   transform=transforms,
+                                   transform=transformer,
                                    download=True)
 
-    valid_dataset = datasets.MNIST(root=data_dir,
+    valid_dataset = dataset_loader(root=data_dir,
                                    train=False,
-                                   transform=transforms)
+                                   transform=transformer,
+                                   download=False)
 
     # define the data loaders
     train_loader = DataLoader(dataset=train_dataset,
@@ -34,132 +47,100 @@ def load_data(data_dir, batch_size):
     return train_loader, valid_loader
 
 
-def train(train_loader, model, criterion, optimizer, epoch):
+def train(train_loader, eval_loader=None, num_epochs=10, model=None, criterion=None, optimizer=None):
     '''
-    Function for the training step of the training loop
-    '''
-
-    logging.info("Training: Epoch {}".format(epoch))
-    model.train()
-    running_loss = 0
-
-    for step, (x, target) in enumerate(train_loader):
-        optimizer.zero_grad()
-        # Forward pass
-        prediction = model(x)
-        loss = criterion(prediction, target)
-        running_loss += loss.item() * x.size(0)
-        # Backward pass
-        loss.backward()
-        optimizer.step()
-        if step % 100 == 0:
-            logging.info("Step = {0}, Training loss = {1}".format(step, loss))
-
-    epoch_loss = running_loss / len(train_loader.dataset)
-    logging.info("Epoch = {0}, Training Epoch loss = {1}".format(epoch, epoch_loss))
-    return model, optimizer, epoch_loss
-
-
-def validate(valid_loader, model, criterion, epoch):
-    '''
-    Function for the validation step of the training loop
+    Training function. If the evaluation dataset is provided, the function will compute the evaluation loss and accuracy
     '''
 
-    logging.info("Validation: Epoch {}".format(epoch))
-    model.eval()
-    running_loss = 0
-
-    for x, target in valid_loader:
-        # Forward pass
-        prediction = model(x)
-        loss = criterion(prediction, target)
-        running_loss += loss.item() * x.size(0)
-
-    epoch_loss = running_loss / len(valid_loader.dataset)
-    logging.info("Epoch = {0}, Validation Epoch loss = {1}".format(epoch, epoch_loss))
-
-    return model, epoch_loss
+    training_losses = []
+    training_accuracies = []
+    validation_losses = []
+    validation_accuracies = []
 
 
-def get_accuracy(model, data_loader):
-    '''
-    Function for computing the accuracy of the predictions over the entire data_loader
-    '''
 
-    correct_pred = 0
-    n = 0
+    if model is None:
+        model = LeNet5()
+    if criterion is None:
+        criterion = nn.CrossEntropyLoss()
+    if optimizer is None:
+        optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    with torch.no_grad():
-        model.eval()
-        for x, target in data_loader:
-            probs = model(x)
-            _,predicted_labels = torch.max(probs, 1)
+    for epoch in range(num_epochs):
+        model.train()
+        running_loss = 0
+        num_train_correct_class = 0
 
-            n += target.size(0)
-            correct_pred += (predicted_labels == target).sum()
+        for step, (x, target) in enumerate(train_loader):
+            optimizer.zero_grad()
+            # Forward pass
+            prediction = model(x)
+            # compute loss
+            loss = criterion(prediction, target)
+            running_loss += loss.item() * x.size(0)
+            # Backward pass
+            loss.backward()
+            optimizer.step()
+            num_train_correct_class += get_num_correct_class(prediction, target)
+            if step % 100 == 99:
+                logging.info("Training: Epoch = {0}, Step = {1}, loss = {2}".format(epoch, step+1, loss))
 
-    return 1.0 * correct_pred / n
+        epoch_loss = running_loss / len(train_loader.dataset)
+        epoch_accuracy = 1.0 * num_train_correct_class / len(train_loader)
+        logging.info("Training: Epoch = {0}, loss = {1}, Accuracy {2}"
+                     .format(epoch, epoch_loss, epoch_accuracy))
+
+        training_losses.append(epoch_loss)
+        training_accuracies.append(epoch_accuracy)
+
+        if eval_loader is not None:
+            model.eval()
+            running_loss = 0
+            num_validation_correct_class = 0
+
+            for x, target in eval_loader:
+                # Forward pass
+                prediction = model(x)
+                loss = criterion(prediction, target)
+                running_loss += loss.item() * x.size(0)
+                num_validation_correct_class += get_num_correct_class(prediction, target)
+
+            epoch_loss = running_loss / len(eval_loader.dataset)
+            epoch_accuracy = 1.0 * num_validation_correct_class / len(eval_loader)
+            logging.info("Validation: Epoch = {0}, loss = {1}, Accuracy {2}"
+                         .format(epoch, epoch_loss, epoch_accuracy))
+            validation_losses.append(epoch_loss)
+            validation_accuracies.append(epoch_accuracy)
+
+    plot_losses(training_losses, validation_losses, training_accuracies, validation_accuracies)
+    return training_losses, validation_losses, training_accuracies, validation_accuracies
 
 
-def training_loop(epochs, batch_size):
-    '''
-    Function defining the entire training loop
-    '''
-
-    train_loader,valid_loader  = load_data("dataset", batch_size)
-
-    # set objects for storing metrics
-    train_losses = []
-    valid_losses = []
-    model = LeNet5()
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    # Train model
-    for epoch in range(0, epochs):
-        # training
-        model, optimizer, train_loss = train(train_loader, model, criterion, optimizer, epoch)
-        train_losses.append(train_loss)
-
-        # Predict over training set
-        train_accuracy = get_accuracy(model, train_loader)
-        logging.info("Epoch {0}, Training Accuracy = {1}".format(epoch, train_accuracy))
-
-        # validation
-        with torch.no_grad():
-            model, valid_loss = validate(valid_loader, model, criterion, epoch)
-            valid_losses.append(valid_loss)
-
-        # Predict over validation set
-        validation_accuracy = get_accuracy(model, valid_loader)
-        logging.info("Epoch {0}, Validation Accuracy = {1}".format(epoch, validation_accuracy))
-
-    plot_losses(train_losses, valid_losses)
+def get_num_correct_class(pred, targets):
+    _, labels = torch.max(pred, 1)
+    return sum([label == target for (label, target) in zip(labels, targets)])
 
 
-    return model, optimizer, (train_losses, valid_losses)
-
-
-def plot_losses(train_losses, valid_losses):
+def plot_losses(train_losses, valid_losses, training_accuracies, validation_accuracies):
     '''
     Function for plotting training and validation losses
     '''
 
     # temporarily change the style of the plots to seaborn
-    plt.style.use('seaborn')
 
-    train_losses = np.array(train_losses)
-    valid_losses = np.array(valid_losses)
+    fig, ax = plt.subplots(1, 2, figsize=(8, 4.5))
 
-    fig, ax = plt.subplots(figsize=(8, 4.5))
+    ax[0].plot(train_losses, color='blue', label='Training loss')
+    ax[0].plot(valid_losses, color='red', label='Validation loss')
+    ax[0].set(title="Loss over epochs", xlabel='Epoch', ylabel='Loss')
+    ax[0].legend()
 
-    ax.plot(train_losses, color='blue', label='Training loss')
-    ax.plot(valid_losses, color='red', label='Validation loss')
-    ax.set(title="Loss over epochs",
-           xlabel='Epoch',
-           ylabel='Loss')
-    ax.legend()
+    ax[1].plot(training_accuracies, color='blue', label='Training accuracy')
+    ax[1].plot(validation_accuracies, color='red', label='Validation accuracy')
+    ax[1].set(title="Accuracy over epochs", xlabel='Epoch', ylabel='Accuracy')
+    ax[1].legend()
+
     fig.show()
 
     # change the plot style to default
     plt.savefig("accuracy_plot")
-
