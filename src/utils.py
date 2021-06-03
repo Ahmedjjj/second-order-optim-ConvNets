@@ -1,23 +1,23 @@
 import logging
+
+import matplotlib.pyplot as plt
 import torch
 from torch import nn
-import matplotlib.pyplot as plt
-import numpy as np
-from model import *
-from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
+from torchvision import transforms, datasets
+
+from src.model import LeNet5
 
 
 def load_data(data_dir, batch_size=100, dataset=None):
-
     transformer = transforms.Compose([transforms.Resize((32, 32)),
-                                     transforms.ToTensor()])
+                                      transforms.ToTensor()])
 
     if dataset == "CIFAR":
         dataset_loader = datasets.CIFAR10
         transformer = transforms.Compose([transforms.Grayscale(),
-                                         transforms.Resize((32, 32)),
-                                         transforms.ToTensor()])
+                                          transforms.Resize((32, 32)),
+                                          transforms.ToTensor()])
 
     elif dataset == "Fashion_MNIST":
         dataset_loader = datasets.FashionMNIST
@@ -30,37 +30,45 @@ def load_data(data_dir, batch_size=100, dataset=None):
                                    transform=transformer,
                                    download=True)
 
-    valid_dataset = dataset_loader(root=data_dir,
-                                   train=False,
-                                   transform=transformer,
-                                   download=False)
+    test_dataset = dataset_loader(root=data_dir,
+                                  train=False,
+                                  transform=transformer,
+                                  download=False)
 
     # define the data loaders
     train_loader = DataLoader(dataset=train_dataset,
                               batch_size=batch_size,
                               shuffle=True)
 
-    valid_loader = DataLoader(dataset=valid_dataset,
-                              batch_size=batch_size,
-                              shuffle=False)
+    test_loader = DataLoader(dataset=test_dataset,
+                             batch_size=batch_size,
+                             shuffle=False)
 
-    return train_loader, valid_loader
+    return train_loader, test_loader
 
 
-def train(train_loader, eval_loader=None, num_epochs=10, model=None, criterion=None, optimizer=None):
-    '''
+def train(train_loader, test_loader=None, num_epochs=10, model=None, criterion=None, optimizer=None):
+    """
     Training function. If the evaluation dataset is provided, the function will compute the evaluation loss and accuracy
-    '''
+
+    Args:
+        train_loader:
+        test_loader:
+        num_epochs:
+        model:
+        criterion:
+        optimizer:
+    """
 
     training_losses = []
     training_accuracies = []
-    validation_losses = []
-    validation_accuracies = []
+    test_losses = []
+    test_accuracies = []
 
-
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if model is None:
-        model = LeNet5()
+        model = LeNet5().to(device)
     if criterion is None:
         criterion = nn.CrossEntropyLoss()
     if optimizer is None:
@@ -72,6 +80,7 @@ def train(train_loader, eval_loader=None, num_epochs=10, model=None, criterion=N
         num_train_correct_class = 0
 
         for step, (x, target) in enumerate(train_loader):
+            x, target = x.to(device), target.to(device)
             optimizer.zero_grad()
             # Forward pass
             prediction = model(x)
@@ -83,7 +92,7 @@ def train(train_loader, eval_loader=None, num_epochs=10, model=None, criterion=N
             optimizer.step()
             num_train_correct_class += get_num_correct_class(prediction, target)
             if step % 100 == 99:
-                logging.info("Training: Epoch = {0}, Step = {1}, loss = {2}".format(epoch, step+1, loss))
+                logging.info("Training: Epoch = {0}, Step = {1}, loss = {2}".format(epoch, step + 1, loss))
 
         epoch_loss = running_loss / len(train_loader.dataset)
         epoch_accuracy = 1.0 * num_train_correct_class / len(train_loader)
@@ -93,27 +102,28 @@ def train(train_loader, eval_loader=None, num_epochs=10, model=None, criterion=N
         training_losses.append(epoch_loss)
         training_accuracies.append(epoch_accuracy)
 
-        if eval_loader is not None:
+        if test_loader is not None:
             model.eval()
             running_loss = 0
-            num_validation_correct_class = 0
+            num_test_correct_class = 0
 
-            for x, target in eval_loader:
+            for x, target in test_loader:
+                x, target = x.to(device), target.to(device)
                 # Forward pass
                 prediction = model(x)
                 loss = criterion(prediction, target)
                 running_loss += loss.item() * x.size(0)
-                num_validation_correct_class += get_num_correct_class(prediction, target)
+                num_test_correct_class += get_num_correct_class(prediction, target)
 
-            epoch_loss = running_loss / len(eval_loader.dataset)
-            epoch_accuracy = 1.0 * num_validation_correct_class / len(eval_loader)
+            epoch_loss = running_loss / len(test_loader.dataset)
+            epoch_accuracy = 1.0 * num_test_correct_class / len(test_loader)
             logging.info("Validation: Epoch = {0}, loss = {1}, Accuracy {2}"
                          .format(epoch, epoch_loss, epoch_accuracy))
-            validation_losses.append(epoch_loss)
-            validation_accuracies.append(epoch_accuracy)
+            test_losses.append(epoch_loss)
+            test_accuracies.append(epoch_accuracy)
 
-    plot_losses(training_losses, validation_losses, training_accuracies, validation_accuracies)
-    return training_losses, validation_losses, training_accuracies, validation_accuracies
+    plot_losses(training_losses, test_losses, training_accuracies, test_accuracies)
+    return training_losses, test_losses, training_accuracies, test_accuracies
 
 
 def get_num_correct_class(pred, targets):
