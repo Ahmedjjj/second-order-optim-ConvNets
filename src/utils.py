@@ -48,11 +48,12 @@ def load_data(data_dir, batch_size=100, dataset=None):
 
 
 def train(train_loader, test_loader=None, num_epochs=10, model=LeNet5, criterion=nn.CrossEntropyLoss,
-          optimizer=torch.optim.Adam, use_gpu=True, **kwargs):
+          optimizer=torch.optim.Adam, use_gpu=True, create_graph=False, **kwargs):
     """
     Training function. If the evaluation dataset is provided, the function will compute the evaluation loss and accuracy
 
     Args:
+        create_graph:
         train_loader:
         test_loader:
         num_epochs:
@@ -89,15 +90,13 @@ def train(train_loader, test_loader=None, num_epochs=10, model=LeNet5, criterion
                 # compute loss
                 loss = criterion(prediction, target)
                 # Backward pass
-                loss.backward()
+                loss.backward(create_graph=create_graph)
                 return loss
 
             loss = closure().item()
             running_loss += loss * x.size(0)
-            optimizer.step(closure)
+            optimizer.step(closure=closure)
             num_train_correct_class += get_num_correct_class(model(x), target)
-            if step % 100 == 99:
-                logging.info("Training: Epoch = {0}, Step = {1}, loss = {2}".format(epoch, step + 1, loss))
 
         epoch_loss = running_loss / len(train_loader.dataset)
         epoch_accuracy = 1.0 * num_train_correct_class / len(train_loader.dataset)
@@ -128,6 +127,7 @@ def train(train_loader, test_loader=None, num_epochs=10, model=LeNet5, criterion
                              .format(epoch, epoch_loss, epoch_accuracy))
                 test_losses.append(epoch_loss)
                 test_accuracies.append(epoch_accuracy)
+    torch.cuda.empty_cache()
 
     plot_losses(training_losses, test_losses, training_accuracies, test_accuracies)
     return training_losses, test_losses, training_accuracies, test_accuracies
