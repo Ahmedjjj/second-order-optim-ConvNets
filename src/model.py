@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from torch.nn import functional as F
 
 
 class LeNet5(nn.Module):
@@ -23,10 +22,13 @@ class LeNet5(nn.Module):
             nn.ReLU(),
             nn.Linear(in_features=84, out_features=10),
         )
+        for param in self.parameters():
+            param.require_grad = True
 
     def forward(self, x):
         x = self.feature_extractor(x)
         x = torch.flatten(x, 1)
         x = self.classifier(x)
-        probs = F.softmax(x, dim=1)
-        return probs
+        return x
+
+
