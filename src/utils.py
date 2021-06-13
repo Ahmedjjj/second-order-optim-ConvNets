@@ -96,7 +96,7 @@ def train(train_loader, test_loader=None, num_epochs=10, model=LeNet5, criterion
             loss = closure().item()
             running_loss += loss * x.size(0)
             optimizer.step(closure=closure)
-            num_train_correct_class += get_num_correct_class(model(x), target)
+            num_train_correct_class += get_num_correct_class(model(x), target).item()
 
         epoch_loss = running_loss / len(train_loader.dataset)
         epoch_accuracy = 1.0 * num_train_correct_class / len(train_loader.dataset)
@@ -119,7 +119,7 @@ def train(train_loader, test_loader=None, num_epochs=10, model=LeNet5, criterion
                     prediction = model(x)
                     loss = criterion(prediction, target)
                     running_loss += loss.item() * x.size(0)
-                    num_test_correct_class += get_num_correct_class(prediction, target)
+                    num_test_correct_class += get_num_correct_class(prediction, target).item()
 
                 epoch_loss = running_loss / len(test_loader.dataset)
                 epoch_accuracy = 1.0 * num_test_correct_class / len(test_loader.dataset)
@@ -130,7 +130,7 @@ def train(train_loader, test_loader=None, num_epochs=10, model=LeNet5, criterion
     torch.cuda.empty_cache()
 
     plot_losses(training_losses, test_losses, training_accuracies, test_accuracies)
-    return training_losses, test_losses, training_accuracies, test_accuracies
+    return training_losses, test_losses, training_accuracies, test_accuracies, model
 
 
 def get_num_correct_class(pred, targets):
