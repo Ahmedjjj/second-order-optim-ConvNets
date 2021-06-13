@@ -2,3 +2,10 @@
 datasets/
 .idea/
 **/__pycache__/
+
+.DS_Store
+.vscode/
+"Icon\r"
+accuracy_plot.png
+"notebooks/Icon\r"
+"src/Icon\r"
