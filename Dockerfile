@@ -16,7 +16,7 @@ RUN useradd -d /home -s /bin/bash -u $user $usern
 RUN chown -R $usern /home
 USER $usern
 
-RUN pip --no-cache-dir --quiet install --upgrade matplotlib notebook pandas ipywidgets
+RUN pip --no-cache-dir --quiet install --upgrade matplotlib notebook pandas ipywidgets pyhessian
 
 WORKDIR /home
 RUN git clone https://github.com/hjmshi/PyTorch-LBFGS.git
