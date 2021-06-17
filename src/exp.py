@@ -1,7 +1,7 @@
+import logging
 import torch
 from apollo import Apollo
 from optim_adahessian import Adahessian
-import logging
 
 import src.utils as utils
 
@@ -11,7 +11,7 @@ def run_experiment(dataset, optimizer, optimizer_name, batch_size=100, num_epoch
                    use_gpu=True, create_graph=False, **kwargs):
     torch.manual_seed(seed)
 
-    logging.info("Dataset: {0}, Optimizer: {1}".format(dataset,optimizer_name))
+    logging.info("Dataset: {0}, Optimizer: {1}".format(dataset, optimizer_name))
 
     train_loader, test_loader = utils.load_data(data_dir, batch_size=batch_size, dataset=dataset)
 
@@ -19,11 +19,11 @@ def run_experiment(dataset, optimizer, optimizer_name, batch_size=100, num_epoch
         utils.train(train_loader, test_loader, use_gpu=use_gpu, create_graph=create_graph,
                     num_epochs=num_epochs, optimizer=optimizer, **kwargs)
 
-    hessian_mx = utils.compute_hessian(model,train_loader)
+    hessian_mx = utils.compute_hessian(model, train_loader)
 
-    return {'training_losses': training_losses,'test_losses': test_losses,
-            'training_accuracies': training_accuracies,'test_accuracies': test_accuracies,
-            'model' : model ,'hessian': hessian_mx}
+    return {'training_losses': training_losses, 'test_losses': test_losses,
+            'training_accuracies': training_accuracies, 'test_accuracies': test_accuracies,
+            'model': model, 'hessian': hessian_mx}
 
 
 def run_experiment_all_optimizers(datasets, optimizers, num_epochs=100, save_dir='/home/app/results'):
@@ -46,8 +46,7 @@ def run_experiment_all_optimizers(datasets, optimizers, num_epochs=100, save_dir
         results[dataset] = {}
         for optimizer in optimizers:
             results[dataset][optimizer_args[optimizer]['name']] = \
-                run_experiment(dataset, optimizer,optimizer_args[optimizer]['name'],
+                run_experiment(dataset, optimizer, optimizer_args[optimizer]['name'],
                                batch_size=batch_size, num_epochs=num_epochs, **optimizer_args[optimizer]['kwargs'])
 
     return results
-

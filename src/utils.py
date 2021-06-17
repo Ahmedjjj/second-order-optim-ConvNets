@@ -1,12 +1,11 @@
 import logging
 import matplotlib.pyplot as plt
 import torch
+from pyhessian import hessian
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
-
-from pyhessian import hessian
 
 from src.model import LeNet5
 
@@ -169,6 +168,6 @@ def plot_losses(train_losses, valid_losses, training_accuracies, validation_accu
 def compute_hessian(model, data_loader):
     criterion = torch.nn.CrossEntropyLoss()
     cuda = torch.cuda.is_available()
-    hessian_mx = hessian(model, criterion, dataloader = data_loader, cuda=cuda)
+    hessian_mx = hessian(model, criterion, dataloader=data_loader, cuda=cuda)
 
     return hessian_mx
