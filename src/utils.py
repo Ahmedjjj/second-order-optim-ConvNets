@@ -70,6 +70,9 @@ def train(train_loader, test_loader=None, num_epochs=10, model=LeNet5, criterion
         use_gpu: boolean, whether to use the gpu or not
         create_graph: boolean, used by some optimizers in the backward function
 
+    Returns:
+        training losses, test losses, training accuracies, test accuracies, final trained model
+
     """
 
     training_losses = []
