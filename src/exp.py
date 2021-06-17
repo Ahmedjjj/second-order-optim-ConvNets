@@ -9,6 +9,22 @@ import src.utils as utils
 def run_experiment(dataset, optimizer, optimizer_name, batch_size=100, num_epochs=10, data_dir='/home/app/datasets',
                    seed=12345,
                    use_gpu=True, create_graph=False, **kwargs):
+    """
+    Runs a single training experiment, i.e one dataset and one optimizer
+    Args:
+        dataset: dataset name, one of ['MNIST', 'Fashion_MNIST', 'CIFAR']
+        optimizer: torch.optim.optimizer
+        optimizer_name: name of the optimizer
+        batch_size: batch size for training
+        num_epochs: num epochs to train
+        data_dir: directory containing the dataset, or where to store a downloaded dataset
+        seed: seed to set for reproducibility
+        use_gpu: whether to try using the gpu or not
+        create_graph: used by the training function, when computing the gradient
+        **kwargs: kwargs to pass to the utils.train function
+    Returns:
+        Dictionary of results
+    """
     torch.manual_seed(seed)
 
     logging.info("Dataset: {0}, Optimizer: {1}".format(dataset, optimizer_name))
@@ -27,6 +43,16 @@ def run_experiment(dataset, optimizer, optimizer_name, batch_size=100, num_epoch
 
 
 def run_experiment_all_optimizers(datasets, optimizers, num_epochs=100, save_dir='/home/app/results'):
+    """
+    Runs training for a set of datasets on a set of optimizers, uses hard-coded parameters for each optimizer
+    Args:
+        datasets: list of dataset names
+        optimizers: list of optimizers
+        num_epochs: number of epochs to train on
+        save_dir: where to find the dataset or download it
+    Returns:
+    list of dicts, representing the results of each experiment
+    """
     # Arguments specific to each optimizer
     optimizer_args = {
         torch.optim.LBFGS: {'name': 'LBFGS', 'kwargs': {'history_size': 5, 'max_iter': 4,
