@@ -17,9 +17,9 @@ RUN chown -R $usern /home
 USER $usern
 
 RUN pip --no-cache-dir --quiet install --upgrade matplotlib notebook pandas ipywidgets pyhessian
+RUN pip --no-cache-dir --quiet install nb_black
 
 WORKDIR /home
-RUN git clone https://github.com/hjmshi/PyTorch-LBFGS.git
 RUN git clone https://github.com/amirgholami/adahessian.git
 RUN git clone https://github.com/XuezheMax/apollo.git
 WORKDIR /home/app
