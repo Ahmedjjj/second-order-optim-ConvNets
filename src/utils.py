@@ -1,7 +1,5 @@
 import logging
-import matplotlib.pyplot as plt
 import torch
-from pyhessian import hessian
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -11,6 +9,15 @@ from src.model import LeNet5
 
 
 def load_data(data_dir, batch_size=100, dataset=None):
+    """
+    Load a dataset, and download it if necessary
+    Args:
+        data_dir: directory where to store the data
+        batch_size: batch size to use
+        dataset: dataset name , one of ['MNIST, 'Fashion_MNIST, 'CIFAR']
+    Returns:
+        two torch.data.DataLoaders, train and test in that order
+    """
     transformer = transforms.Compose([transforms.Resize((32, 32)),
                                       transforms.ToTensor()])
 
@@ -51,17 +58,18 @@ def load_data(data_dir, batch_size=100, dataset=None):
 def train(train_loader, test_loader=None, num_epochs=10, model=LeNet5, criterion=nn.CrossEntropyLoss,
           optimizer=torch.optim.Adam, use_gpu=True, create_graph=False, **kwargs):
     """
-    Training function. If the evaluation dataset is provided, the function will compute the evaluation loss and accuracy
+    Training function. If the test dataset is provided, the function will compute the test loss and accuracy
 
     Args:
-        create_graph:
-        train_loader:
-        test_loader:
-        num_epochs:
-        model:
-        criterion:
-        optimizer:
-        use_gpu:
+        train_loader: training set
+        test_loader: test set
+        num_epochs: num of epochs to train on
+        model: torch.nn.model
+        criterion: loss criterion used
+        optimizer: torch.optim.Optimizer, optimizer to train with
+        use_gpu: boolean, whether to use the gpu or not
+        create_graph: boolean, used by some optimizers in the backward function
+
     """
 
     training_losses = []
@@ -130,44 +138,19 @@ def train(train_loader, test_loader=None, num_epochs=10, model=LeNet5, criterion
                 test_accuracies.append(epoch_accuracy)
     torch.cuda.empty_cache()
 
-    plot_losses(training_losses, test_losses, training_accuracies, test_accuracies)
     return training_losses, test_losses, training_accuracies, test_accuracies, model
 
 
 def get_num_correct_class(pred, targets):
+    """
+    Compute the accuracy of predictions
+    Args:
+        pred: predicted labels
+        targets: true labels
+
+    Returns: Accuracy
+
+    """
     probs = F.softmax(pred, dim=1)
     labels = torch.argmax(probs, dim=1)
     return sum([label == target for (label, target) in zip(labels, targets)])
-
-
-def plot_losses(train_losses, valid_losses, training_accuracies, validation_accuracies):
-    """
-    Function for plotting training and validation losses
-    """
-
-    # temporarily change the style of the plots to seaborn
-
-    fig, ax = plt.subplots(1, 2, figsize=(8, 4.5))
-
-    ax[0].plot(train_losses, color='blue', label='Training loss')
-    ax[0].plot(valid_losses, color='red', label='Validation loss')
-    ax[0].set(title="Loss over epochs", xlabel='Epoch', ylabel='Loss')
-    ax[0].legend()
-
-    ax[1].plot(training_accuracies, color='blue', label='Training accuracy')
-    ax[1].plot(validation_accuracies, color='red', label='Validation accuracy')
-    ax[1].set(title="Accuracy over epochs", xlabel='Epoch', ylabel='Accuracy')
-    ax[1].legend()
-
-    fig.show()
-
-    # change the plot style to default
-    plt.savefig("accuracy_plot")
-
-
-def compute_hessian(model, data_loader):
-    criterion = torch.nn.CrossEntropyLoss()
-    cuda = torch.cuda.is_available()
-    hessian_mx = hessian(model, criterion, dataloader=data_loader, cuda=cuda)
-
-    return hessian_mx
