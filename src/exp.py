@@ -35,11 +35,9 @@ def run_experiment(dataset, optimizer, optimizer_name, batch_size=100, num_epoch
         utils.train(train_loader, test_loader, use_gpu=use_gpu, create_graph=create_graph,
                     num_epochs=num_epochs, optimizer=optimizer, **kwargs)
 
-    hessian_mx = utils.compute_hessian(model, train_loader)
-
     return {'training_losses': training_losses, 'test_losses': test_losses,
             'training_accuracies': training_accuracies, 'test_accuracies': test_accuracies,
-            'model': model, 'hessian': hessian_mx}
+            'model': model}
 
 
 def run_experiment_all_optimizers(datasets, optimizers, num_epochs=100, save_dir='/home/app/results'):
