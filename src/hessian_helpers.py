@@ -7,7 +7,21 @@ from pyhessian import hessian
 import src.utils as utils
 
 
-def perturbate_model_2d(model, model_per, direction_1, direction_2, alpha_1, alpha_2):
+def perturb_model_2d(model, model_per, direction_1, direction_2, alpha_1, alpha_2):
+    """
+    This function will return a model with parameters perturbed in the direction
+    defined by alpha_1 * direction_1 + alpha_2 * direction_2
+    Args:
+        model: initial model
+        model_per: copy of model, passed as parameter to save
+        direction_1:
+        direction_2:
+        alpha_1:
+        alpha_2:
+
+    Returns:
+
+    """
     for param_p, param_o, d_1, d_2 in zip(
             model_per.parameters(), model.parameters(), direction_1, direction_2
     ):
@@ -17,7 +31,7 @@ def perturbate_model_2d(model, model_per, direction_1, direction_2, alpha_1, alp
     return model_per
 
 
-def perturbate_model(model, model_per, direction, alpha):
+def perturb_model(model, model_per, direction, alpha):
     for param_p, param_o, d in zip(
             model_per.parameters(), model.parameters(), direction
     ):
@@ -30,7 +44,7 @@ def perturbate_model(model, model_per, direction, alpha):
 def get_hessian(model, dataset_name, batch_size):
     # Work with only one (big) batch
     train_loader, _ = utils.load_data(
-        "/home/app/datasets", batch_size=batch_size, dataset=       dataset_name
+        "/home/app/datasets", batch_size=batch_size, dataset=dataset_name
     )
     inputs, targets = next(iter(train_loader))
     criterion = torch.nn.CrossEntropyLoss()
@@ -53,7 +67,7 @@ def compute_minimum_shape(
     for alpha in alphas:
         if use_3d:
             for alpha_2 in alphas:
-                model_per = perturbate_model_2d(
+                model_per = perturb_model_2d(
                     model,
                     model_per,
                     top_eigenvectors[0],
@@ -63,7 +77,7 @@ def compute_minimum_shape(
                 )
                 losses.append(criterion(model_per(inputs), targets).item())
         else:
-            model_per = perturbate_model(model, model_per, top_eigenvectors[0], alpha)
+            model_per = perturb_model(model, model_per, top_eigenvectors[0], alpha)
             losses.append(criterion(model_per(inputs), targets).item())
 
     return alphas, losses

@@ -2,6 +2,7 @@ import torch
 from torch import nn
 
 
+# Classic LeNet5 Conv-Net
 class LeNet5(nn.Module):
     def __init__(self):
         super(LeNet5, self).__init__()
@@ -30,5 +31,3 @@ class LeNet5(nn.Module):
         x = torch.flatten(x, 1)
         x = self.classifier(x)
         return x
-
-
