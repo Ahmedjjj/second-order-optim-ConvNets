@@ -6,7 +6,10 @@ This code is our work to EPFL's CS-439 Optimization for Machine Learning course 
 
 ## Dataset
 We use the CIFAR10, MNIST and Fashion-MNIST datasets. We download these automatically
- if we don't have access to the code.
+ if we don't have access to the code. However, downloading MNIST may result into an error
+ since the server is often down. If this problem occur, the dataset can be found in the following link:
+ https://drive.google.com/drive/folders/1qMkAtR1Km42NRvQcrKnCIfBfoPw4lsLo?usp=sharing
+
 
 ## Dependencies
 We recommend using `docker` to install all the dependencies.  
