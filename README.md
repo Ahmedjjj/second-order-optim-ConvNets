@@ -8,7 +8,8 @@ This code is our work to EPFL's CS-439 Optimization for Machine Learning course 
 We use the CIFAR10, MNIST and Fashion-MNIST datasets. We download these automatically
  if we don't have access to the code. However, downloading MNIST may result into an error
  since the server is often down. If this problem occur, the dataset can be found in the following link:
- https://drive.google.com/drive/folders/1qMkAtR1Km42NRvQcrKnCIfBfoPw4lsLo?usp=sharing
+ https://drive.google.com/drive/folders/1qMkAtR1Km42NRvQcrKnCIfBfoPw4lsLo?usp=sharing  
+ Please download it in a folder named `datasets` in the root of the project.
 
 
 ## Dependencies
