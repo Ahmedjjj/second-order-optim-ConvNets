@@ -151,7 +151,7 @@ def compute_esd(model, dataset_name, batch_size=2000):
         dataset_name: dataset name used to train the model
         batch_size:  batch_size used to create a Pyhessian object
     Return:
-        Two arrays: The first one contains the range of eigenvalues and the another contains the
+        Two arrays, the first one contains the range of eigenvalues and the another contains the
         density of each eigenvalue.
     """
     model_hessian, _, _, _ = get_hessian(model, dataset_name, batch_size)
