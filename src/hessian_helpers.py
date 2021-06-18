@@ -137,7 +137,7 @@ def compute_hessian_trace(model, dataset_name, batch_size=2000):
         dataset_name: dataset name used to train the model
         batch_size:  batch_size used to create a Pyhessian object
     Return:
-        output: return the diagonal of the hessian matrix
+        a list containing the diagonal of the hessian matrix
     """
     model_hessian, _, _, _ = get_hessian(model, dataset_name, batch_size)
     return model_hessian.trace()
@@ -151,8 +151,8 @@ def compute_esd(model, dataset_name, batch_size=2000):
         dataset_name: dataset name used to train the model
         batch_size:  batch_size used to create a Pyhessian object
     Return:
-        output: return an array containing the range of eigenvalues and another containing the
-                density of each eigenvalue.
+        Two arrays: The first one contains the range of eigenvalues and the another contains the
+        density of each eigenvalue.
     """
     model_hessian, _, _, _ = get_hessian(model, dataset_name, batch_size)
     return model_hessian.density()
